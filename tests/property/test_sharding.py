@@ -1,5 +1,7 @@
 """Property tests for flat sharding and round-trip consistency (AC-04)."""
 
+from typing import Any
+
 import hypothesis.strategies as st
 import torch
 from hypothesis import given, settings
@@ -14,7 +16,7 @@ from zerosim.sharding import (
 
 
 @st.composite
-def random_param_shapes(draw):
+def random_param_shapes(draw: Any):
     num_params = draw(st.integers(min_value=1, max_value=5))
     shapes = []
     for idx in range(num_params):
@@ -25,7 +27,7 @@ def random_param_shapes(draw):
 
 @settings(max_examples=50, deadline=None)
 @given(
-    param_shapes=random_param_shapes(),
+    param_shapes=random_param_shapes(),  # type: ignore
     world_size=st.integers(min_value=1, max_value=64),
 )
 def test_sharding_roundtrip_and_tiling_properties(param_shapes, world_size):

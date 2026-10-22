@@ -72,7 +72,8 @@ class ThreadCoordinator:
                 # Execute collective computation
                 if op_name == "all_reduce_mean":
                     # Sum in ascending rank order
-                    stacked = torch.stack([self.slots[r] for r in range(self.world_size)], dim=0)  # type: ignore
+                    tensor_slots = [s for s in self.slots if s is not None]
+                    stacked = torch.stack(tensor_slots, dim=0)
                     reduced = torch.sum(stacked, dim=0) / float(self.world_size)
                     for r in range(self.world_size):
                         self.outputs[r] = reduced.clone()
@@ -85,7 +86,8 @@ class ThreadCoordinator:
                         )
                     shard_len = full_len // self.world_size
                     # Stack full inputs and reduce
-                    stacked = torch.stack([self.slots[r] for r in range(self.world_size)], dim=0)  # type: ignore
+                    tensor_slots = [s for s in self.slots if s is not None]
+                    stacked = torch.stack(tensor_slots, dim=0)
                     reduced_full = torch.sum(stacked, dim=0) / float(self.world_size)
                     for r in range(self.world_size):
                         start = r * shard_len
@@ -94,7 +96,7 @@ class ThreadCoordinator:
 
                 elif op_name == "all_gather":
                     # Concatenate shards in ascending rank order
-                    shards = [self.slots[r] for r in range(self.world_size)]  # type: ignore
+                    shards = [s for s in self.slots if s is not None]
                     gathered = torch.cat(shards, dim=0)
                     for r in range(self.world_size):
                         self.outputs[r] = gathered.clone()
