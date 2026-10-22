@@ -81,9 +81,7 @@ class CommStats:
     @property
     def total_ring_bytes(self) -> int:
         return (
-            self.all_reduce.ring_bytes
-            + self.reduce_scatter.ring_bytes
-            + self.all_gather.ring_bytes
+            self.all_reduce.ring_bytes + self.reduce_scatter.ring_bytes + self.all_gather.ring_bytes
         )
 
     def to_dict(self) -> dict[str, Any]:

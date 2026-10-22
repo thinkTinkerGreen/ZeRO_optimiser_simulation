@@ -56,14 +56,14 @@ def test_e1_memory_bounds_and_uniformity(policy, stage):
     for r in range(N):
         ledger = res.ledgers[r]
         peak = ledger.peak_model_state_logical
-        assert (
-            f_padded <= peak <= f_padded + transient_bound
-        ), f"Rank {r} peak {peak} out of bounds [{f_padded}, {f_padded + transient_bound}]"
+        assert f_padded <= peak <= f_padded + transient_bound, (
+            f"Rank {r} peak {peak} out of bounds [{f_padded}, {f_padded + transient_bound}]"
+        )
 
         # Check uniformity: identical peak_by_category across all 32 ranks
-        assert (
-            ledger.peak_by_category == rank0_peaks
-        ), f"Rank {r} category peaks differ from Rank 0!"
+        assert ledger.peak_by_category == rank0_peaks, (
+            f"Rank {r} category peaks differ from Rank 0!"
+        )
 
 
 def test_e1_activation_peak_identical_across_stages():

@@ -1,10 +1,9 @@
 """Unit tests for model, data, and flat AdamW parity with PyTorch AdamW (AC-06)."""
 
-import pytest
 import torch
 
 from zerosim.config import MODEL_DEMO, MODEL_TINY, SimConfig
-from zerosim.data import compute_loss, generate_batch, get_rank_batch
+from zerosim.data import generate_batch, get_rank_batch
 from zerosim.determinism import get_generator
 from zerosim.model import GPT, count_params
 from zerosim.optim import FlatShardAdamW
@@ -42,7 +41,9 @@ def test_flat_shard_adamw_vs_pytorch_parity():
     flat_params = [p.detach().clone().reshape(-1) for p in p_torch]
 
     opt_torch = torch.optim.AdamW(p_torch, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=1e-2)
-    opt_custom = FlatShardAdamW(flat_params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=1e-2)
+    opt_custom = FlatShardAdamW(
+        flat_params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=1e-2
+    )
 
     for step in range(5):
         grads = [torch.randn_like(p) for p in p_torch]

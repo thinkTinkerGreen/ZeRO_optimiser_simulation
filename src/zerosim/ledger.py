@@ -77,8 +77,8 @@ class MemoryLedger:
         self._timeline: list[TimelineEvent] = []
 
         # Current live bytes per category
-        self._live_logical: dict[MemoryCategory, int] = {cat: 0 for cat in MemoryCategory}
-        self._live_actual: dict[MemoryCategory, int] = {cat: 0 for cat in MemoryCategory}
+        self._live_logical: dict[MemoryCategory, int] = dict.fromkeys(MemoryCategory, 0)
+        self._live_actual: dict[MemoryCategory, int] = dict.fromkeys(MemoryCategory, 0)
 
         # Peak tracking
         self.peak_logical = 0
@@ -103,14 +103,14 @@ class MemoryLedger:
         if name in self._active_allocations:
             raise ValueError(f"Allocation '{name}' already exists in rank {self.rank} ledger.")
 
-        if isinstance(tensor_or_numel, torch.Tensor):
-            numel = tensor_or_numel.numel()
+        if isinstance(tensor_or_numel, int):
+            numel = tensor_or_numel
+            actual_b = numel * logical_bytes_per_elem if actual_bytes is None else actual_bytes
+        else:
+            numel = int(tensor_or_numel.numel())
             actual_b = (
                 numel * tensor_or_numel.element_size() if actual_bytes is None else actual_bytes
             )
-        else:
-            numel = tensor_or_numel
-            actual_b = numel * logical_bytes_per_elem if actual_bytes is None else actual_bytes
 
         logical_b = numel * logical_bytes_per_elem
 

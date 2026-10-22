@@ -1,0 +1,218 @@
+{
+  "stage_0": {
+    "comm": {
+      "all_gather": {
+        "calls": 0,
+        "elems": 0,
+        "logical_bytes": 0,
+        "ring_bytes": 0
+      },
+      "all_reduce": {
+        "calls": 8,
+        "elems": 10036224,
+        "logical_bytes": 20072448,
+        "ring_bytes": 19445184
+      },
+      "barrier_calls": 0,
+      "notes": [],
+      "rank": 0,
+      "reduce_scatter": {
+        "calls": 0,
+        "elems": 0,
+        "logical_bytes": 0,
+        "ring_bytes": 0
+      },
+      "total_calls": 8,
+      "total_elems": 10036224,
+      "total_logical_bytes": 20072448,
+      "total_ring_bytes": 19445184,
+      "world_size": 32
+    },
+    "cost_ib": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "ib_like",
+      "simulator_wall_clock_s": 6.505254,
+      "t_comm_s": 0.001596,
+      "t_compute_s": 9.9e-05,
+      "t_step_s": 0.001695
+    },
+    "cost_nvlink": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "nvlink_like",
+      "simulator_wall_clock_s": 6.505254,
+      "t_comm_s": 0.000105,
+      "t_compute_s": 9.9e-05,
+      "t_step_s": 0.000204
+    },
+    "flops": {
+      "bwd_flops": 1291845632,
+      "fwd_flops": 645922816,
+      "optimizer_flops": 50181120,
+      "total_flops": 1987949568,
+      "z3_recompute_simulation_overhead_flops": 0
+    },
+    "stage": 0
+  },
+  "stage_1": {
+    "comm": {
+      "all_gather": {
+        "calls": 8,
+        "elems": 5018112,
+        "logical_bytes": 10036224,
+        "ring_bytes": 9722592
+      },
+      "all_reduce": {
+        "calls": 0,
+        "elems": 0,
+        "logical_bytes": 0,
+        "ring_bytes": 0
+      },
+      "barrier_calls": 0,
+      "notes": [],
+      "rank": 0,
+      "reduce_scatter": {
+        "calls": 8,
+        "elems": 5018112,
+        "logical_bytes": 10036224,
+        "ring_bytes": 9722592
+      },
+      "total_calls": 16,
+      "total_elems": 10036224,
+      "total_logical_bytes": 20072448,
+      "total_ring_bytes": 19445184,
+      "world_size": 32
+    },
+    "cost_ib": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "ib_like",
+      "simulator_wall_clock_s": 5.973194,
+      "t_comm_s": 0.001636,
+      "t_compute_s": 9.7e-05,
+      "t_step_s": 0.001733
+    },
+    "cost_nvlink": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "nvlink_like",
+      "simulator_wall_clock_s": 5.973194,
+      "t_comm_s": 0.000145,
+      "t_compute_s": 9.7e-05,
+      "t_step_s": 0.000242
+    },
+    "flops": {
+      "bwd_flops": 1291845632,
+      "fwd_flops": 645922816,
+      "optimizer_flops": 1568160,
+      "total_flops": 1939336608,
+      "z3_recompute_simulation_overhead_flops": 0
+    },
+    "stage": 1
+  },
+  "stage_2": {
+    "comm": {
+      "all_gather": {
+        "calls": 8,
+        "elems": 5018112,
+        "logical_bytes": 10036224,
+        "ring_bytes": 9722592
+      },
+      "all_reduce": {
+        "calls": 0,
+        "elems": 0,
+        "logical_bytes": 0,
+        "ring_bytes": 0
+      },
+      "barrier_calls": 0,
+      "notes": [],
+      "rank": 0,
+      "reduce_scatter": {
+        "calls": 8,
+        "elems": 5018112,
+        "logical_bytes": 10036224,
+        "ring_bytes": 9722592
+      },
+      "total_calls": 16,
+      "total_elems": 10036224,
+      "total_logical_bytes": 20072448,
+      "total_ring_bytes": 19445184,
+      "world_size": 32
+    },
+    "cost_ib": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "ib_like",
+      "simulator_wall_clock_s": 6.22918,
+      "t_comm_s": 0.001636,
+      "t_compute_s": 9.7e-05,
+      "t_step_s": 0.001733
+    },
+    "cost_nvlink": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "nvlink_like",
+      "simulator_wall_clock_s": 6.22918,
+      "t_comm_s": 0.000145,
+      "t_compute_s": 9.7e-05,
+      "t_step_s": 0.000242
+    },
+    "flops": {
+      "bwd_flops": 1291845632,
+      "fwd_flops": 645922816,
+      "optimizer_flops": 1568160,
+      "total_flops": 1939336608,
+      "z3_recompute_simulation_overhead_flops": 0
+    },
+    "stage": 2
+  },
+  "stage_3": {
+    "comm": {
+      "all_gather": {
+        "calls": 16,
+        "elems": 10036224,
+        "logical_bytes": 20072448,
+        "ring_bytes": 19445184
+      },
+      "all_reduce": {
+        "calls": 0,
+        "elems": 0,
+        "logical_bytes": 0,
+        "ring_bytes": 0
+      },
+      "barrier_calls": 0,
+      "notes": [],
+      "rank": 0,
+      "reduce_scatter": {
+        "calls": 8,
+        "elems": 5018112,
+        "logical_bytes": 10036224,
+        "ring_bytes": 9722592
+      },
+      "total_calls": 24,
+      "total_elems": 15054336,
+      "total_logical_bytes": 30108672,
+      "total_ring_bytes": 29167776,
+      "world_size": 32
+    },
+    "cost_ib": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "ib_like",
+      "simulator_wall_clock_s": 6.751882,
+      "t_comm_s": 0.002453,
+      "t_compute_s": 0.000129,
+      "t_step_s": 0.002583
+    },
+    "cost_nvlink": {
+      "note": "Simulator time is host multi-threaded simulation time, not hardware time.",
+      "preset_name": "nvlink_like",
+      "simulator_wall_clock_s": 6.751882,
+      "t_comm_s": 0.000217,
+      "t_compute_s": 0.000129,
+      "t_step_s": 0.000346
+    },
+    "flops": {
+      "bwd_flops": 1291845632,
+      "fwd_flops": 645922816,
+      "optimizer_flops": 1568160,
+      "total_flops": 2585259424,
+      "z3_recompute_simulation_overhead_flops": 645922816
+    },
+    "stage": 3
+  }
+}

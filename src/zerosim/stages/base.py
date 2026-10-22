@@ -3,17 +3,14 @@
 from __future__ import annotations
 
 import abc
-from typing import Any
 
 import torch
-import torch.nn as nn
 
 from zerosim.comm.base import Comm
 from zerosim.config import SimConfig
 from zerosim.governor import ResourceGovernor
 from zerosim.ledger import MemoryCategory, MemoryLedger
 from zerosim.model import GPT
-from zerosim.sharding import FlatUnit
 
 
 class open_noop:
@@ -61,7 +58,6 @@ class BaseStage(abc.ABC):
         return open_noop()
 
     def _pack_activation_hook(self, x: torch.Tensor) -> torch.Tensor:
-        b = x.numel() * x.element_size()
         name = f"act_{len(self._saved_activation_names)}"
         self._saved_activation_names.append(name)
         self.ledger.alloc(

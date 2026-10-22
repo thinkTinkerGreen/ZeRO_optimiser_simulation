@@ -17,7 +17,9 @@ class DistComm(Comm):
         comm_bytes_per_elem: int = 2,
     ) -> None:
         if not dist.is_initialized():
-            raise RuntimeError("torch.distributed must be initialized before instantiating DistComm.")
+            raise RuntimeError(
+                "torch.distributed must be initialized before instantiating DistComm."
+            )
         self.rank = dist.get_rank()
         self.world_size = dist.get_world_size()
         self.comm_bytes = comm_bytes_per_elem

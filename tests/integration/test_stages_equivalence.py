@@ -1,7 +1,6 @@
 """Integration test for E2: Numerical equivalence of Stages 0-3 against single-process reference (AC-07)."""
 
 import pytest
-import torch
 
 from tests.integration.reference import run_reference_trainer
 from zerosim.config import MODEL_TINY, POLICY_FP32, SimConfig
@@ -33,15 +32,15 @@ def test_stage_equivalence_arbitrary_ranks(world_size: int, stage: int):
     # 1. Compare per-step losses: max |loss_stage - loss_ref| <= 1e-10
     for s in range(steps):
         diff = abs(sim_res.losses_per_step[s] - ref_losses[s])
-        assert (
-            diff <= 1e-10
-        ), f"Stage {stage} N={world_size} step {s} loss diff {diff} exceeds 1e-10"
+        assert diff <= 1e-10, (
+            f"Stage {stage} N={world_size} step {s} loss diff {diff} exceeds 1e-10"
+        )
 
     # 2. Compare final parameter vector: max abs diff <= 1e-10
     param_diff = (sim_res.final_parameters.cpu() - ref_params.cpu()).abs().max().item()
-    assert (
-        param_diff <= 1e-10
-    ), f"Stage {stage} N={world_size} param diff {param_diff} exceeds 1e-10"
+    assert param_diff <= 1e-10, (
+        f"Stage {stage} N={world_size} param diff {param_diff} exceeds 1e-10"
+    )
 
 
 def test_stage_equivalence_32_ranks():
@@ -74,11 +73,7 @@ def test_stage_equivalence_32_ranks():
 
         for s in range(steps):
             diff = abs(sim_res.losses_per_step[s] - ref_losses[s])
-            assert (
-                diff <= 1e-10
-            ), f"Stage {stage} N=32 step {s} loss diff {diff} exceeds 1e-10"
+            assert diff <= 1e-10, f"Stage {stage} N=32 step {s} loss diff {diff} exceeds 1e-10"
 
         param_diff = (sim_res.final_parameters.cpu() - ref_params.cpu()).abs().max().item()
-        assert (
-            param_diff <= 1e-10
-        ), f"Stage {stage} N=32 param diff {param_diff} exceeds 1e-10"
+        assert param_diff <= 1e-10, f"Stage {stage} N=32 param diff {param_diff} exceeds 1e-10"

@@ -15,8 +15,6 @@ def plot_memory_timeline_4panels(
 ) -> None:
     """Generate 4-panel stacked area memory timeline across stages 0-3 for rank 0."""
     fig, axes = plt.subplots(4, 1, figsize=(10, 14), sharex=False)
-    categories = ["PARAM", "GRAD", "MASTER", "OPT_M", "OPT_V", "ACTIVATION", "COMM_BUFFER"]
-    colors = ["#4C72B0", "#DD8452", "#55A868", "#C44E52", "#8172B3", "#937860", "#DA8BC3"]
 
     for stage_idx, ax in enumerate(axes):
         timeline = timelines_per_stage.get(stage_idx, [])
@@ -28,7 +26,9 @@ def plot_memory_timeline_4panels(
         # Track logical bytes
         tot_bytes = [e["logical_bytes_total"] / 1e6 for e in timeline]
         ax.plot(seqs, tot_bytes, label="Total Logical (MB)", color="black", lw=1.5)
-        ax.set_title(f"ZeRO Stage {stage_idx} Memory Timeline (Rank 0)", fontsize=11, fontweight="bold")
+        ax.set_title(
+            f"ZeRO Stage {stage_idx} Memory Timeline (Rank 0)", fontsize=11, fontweight="bold"
+        )
         ax.set_ylabel("Memory (MB)")
         ax.grid(True, alpha=0.3)
         ax.legend(loc="upper right", fontsize=8)
@@ -59,7 +59,9 @@ def plot_memory_peaks_vs_formula(
     ax.bar(x + width / 2, form, width, label="Paper Formula (MB)", color="#2ecc71")
 
     ax.set_ylabel("Model State Peak Memory (MB)", fontsize=11)
-    ax.set_title("Peak Model State Memory vs. Theoretical Closed Form (N=32)", fontsize=12, fontweight="bold")
+    ax.set_title(
+        "Peak Model State Memory vs. Theoretical Closed Form (N=32)", fontsize=12, fontweight="bold"
+    )
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()

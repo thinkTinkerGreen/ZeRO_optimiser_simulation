@@ -1,17 +1,12 @@
 """Integration tests for M7: E3 (compute/comm), E4 (scaling), and persistence (AC-09, AC-10, AC-11)."""
 
-import math
 import numpy as np
-import pytest
-import torch
 
-from zerosim.comm.stats import CommStats
 from zerosim.config import MODEL_DEMO, MODEL_TINY, POLICY_MIXED_FP16, SimConfig
 from zerosim.costmodel import PRESET_IB, PRESET_NVLINK, estimate_step_time
-from zerosim.flops import compute_rank_flops, cross_check_flop_counter
+from zerosim.flops import compute_rank_flops
 from zerosim.model import GPT
 from zerosim.persist import (
-    atomic_write_json,
     is_run_completed,
     load_cached_result,
     save_run_result,

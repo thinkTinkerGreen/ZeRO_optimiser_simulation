@@ -107,7 +107,9 @@ def verify_table1_cell(computed: float, printed: float) -> bool:
 def reproduce_paper_table1(fixture_path: str | Path | None = None) -> dict[str, Any]:
     """Reproduce all 54 cells of paper Table 1 and verify against golden fixture."""
     if fixture_path is None:
-        fixture_path = Path(__file__).resolve().parent.parent.parent / "tests/fixtures/paper_table1.json"
+        fixture_path = (
+            Path(__file__).resolve().parent.parent.parent / "tests/fixtures/paper_table1.json"
+        )
 
     with open(fixture_path, encoding="utf-8") as f:
         fixture = json.load(f)

@@ -1,7 +1,7 @@
 """Unit tests for ThreadComm collective communication and mismatch detection (AC-05)."""
 
 import threading
-import pytest
+
 import torch
 
 from zerosim.comm.base import CollectiveMismatchError

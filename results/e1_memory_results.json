@@ -1,0 +1,74 @@
+{
+  "stage_0": {
+    "formula_peak_bytes": 80289792,
+    "formula_peak_mb": 80.29,
+    "measured_peak_bytes": 80289792,
+    "measured_peak_mb": 80.29,
+    "peak_by_category": {
+      "ACTIVATION": 13501058,
+      "COMM_BUFFER": 0,
+      "GRAD": 10036224,
+      "MASTER": 20072448,
+      "OPT_M": 20072448,
+      "OPT_V": 20072448,
+      "PARAM": 10036224,
+      "TEMP": 0
+    },
+    "stage": 0,
+    "uniform_across_ranks": true
+  },
+  "stage_1": {
+    "formula_peak_bytes": 21954240,
+    "formula_peak_mb": 21.95,
+    "measured_peak_bytes": 21954240,
+    "measured_peak_mb": 21.95,
+    "peak_by_category": {
+      "ACTIVATION": 13501058,
+      "COMM_BUFFER": 0,
+      "GRAD": 10036224,
+      "MASTER": 627264,
+      "OPT_M": 627264,
+      "OPT_V": 627264,
+      "PARAM": 10036224,
+      "TEMP": 0
+    },
+    "stage": 1,
+    "uniform_across_ranks": true
+  },
+  "stage_2": {
+    "formula_peak_bytes": 12231648,
+    "formula_peak_mb": 12.23,
+    "measured_peak_bytes": 13811168,
+    "measured_peak_mb": 13.81,
+    "peak_by_category": {
+      "ACTIVATION": 13501058,
+      "COMM_BUFFER": 0,
+      "GRAD": 1893152,
+      "MASTER": 627264,
+      "OPT_M": 627264,
+      "OPT_V": 627264,
+      "PARAM": 10036224,
+      "TEMP": 0
+    },
+    "stage": 2,
+    "uniform_across_ranks": true
+  },
+  "stage_3": {
+    "formula_peak_bytes": 2509056,
+    "formula_peak_mb": 2.51,
+    "measured_peak_bytes": 5668096,
+    "measured_peak_mb": 5.67,
+    "peak_by_category": {
+      "ACTIVATION": 13501058,
+      "COMM_BUFFER": 0,
+      "GRAD": 1893152,
+      "MASTER": 627264,
+      "OPT_M": 627264,
+      "OPT_V": 627264,
+      "PARAM": 1893152,
+      "TEMP": 0
+    },
+    "stage": 3,
+    "uniform_across_ranks": true
+  }
+}

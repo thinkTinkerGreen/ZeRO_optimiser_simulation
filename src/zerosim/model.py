@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import Sequence
 
 import torch
 import torch.nn as nn

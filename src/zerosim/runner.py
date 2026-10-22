@@ -37,7 +37,7 @@ class SimulationResult:
         return {
             "config": self.config.to_dict(),
             "config_hash": self.config.config_hash,
-            "losses_per_step": [round(l, 8) for l in self.losses_per_step],
+            "losses_per_step": [round(loss_val, 8) for loss_val in self.losses_per_step],
             "simulator_wall_clock_s": round(self.simulator_wall_clock_s, 4),
             "rank0_peak_logical": self.ledgers[0].peak_logical,
             "rank0_peak_actual": self.ledgers[0].peak_actual,
@@ -57,6 +57,43 @@ def get_stage_cls(stage_num: int) -> type[BaseStage]:
     elif stage_num == 3:
         return Stage3
     raise ValueError(f"Invalid ZeRO stage: {stage_num}")
+
+
+def run_reference_trainer(
+    cfg: SimConfig,
+    steps: int | None = None,
+) -> tuple[list[float], torch.Tensor]:
+    """Train single-process reference model on full global batch in float64."""
+    from zerosim.data import compute_loss
+    from zerosim.determinism import get_generator
+    from zerosim.model import GPT
+
+    num_steps = steps if steps is not None else cfg.steps
+    gen = get_generator(cfg.seed, rank=0, step=0)
+    model = GPT(cfg.model, generator=gen, dtype=torch.float64)
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=cfg.lr,
+        betas=cfg.betas,
+        eps=cfg.eps,
+        weight_decay=cfg.weight_decay,
+    )
+
+    losses: list[float] = []
+
+    for step in range(num_steps):
+        inputs, targets = generate_batch(cfg, step=step, device="cpu")
+        optimizer.zero_grad()
+        logits = model(inputs)
+        loss = compute_loss(logits, targets)
+        losses.append(loss.item())
+
+        loss.backward()
+        optimizer.step()
+
+    flat_params = torch.cat([p.detach().reshape(-1) for p in model.parameters()])
+    return losses, flat_params
 
 
 def run_simulation(cfg: SimConfig) -> SimulationResult:
@@ -109,6 +146,7 @@ def run_simulation(cfg: SimConfig) -> SimulationResult:
 
             # Snapshot training communication stats before diagnostic parameter gathering
             import copy
+
             final_comm_stats[rank] = copy.deepcopy(stage_instance.comm.stats)
 
             # Extract full parameters at completion for numerical verification

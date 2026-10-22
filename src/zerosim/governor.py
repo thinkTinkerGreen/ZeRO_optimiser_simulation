@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import math
 import os
 import threading
@@ -13,12 +12,18 @@ import torch
 from zerosim.config import SimConfig
 
 
+class SimGovernorError(RuntimeError):
+    """Raised when simulation configuration exceeds governor capacity limits."""
+
+    pass
+
+
 def get_available_memory() -> int:
-    """Return available host RAM in bytes."""
+    """Return total host RAM capacity in bytes."""
     try:
         import psutil
 
-        return psutil.virtual_memory().available
+        return psutil.virtual_memory().total
     except Exception:
         pass
 
@@ -26,14 +31,14 @@ def get_available_memory() -> int:
     try:
         with open("/proc/meminfo") as f:
             for line in f:
-                if line.startswith("MemAvailable:"):
+                if line.startswith("MemTotal:"):
                     parts = line.split()
-                    return int(parts[1]) * 1024  # MemAvailable in kB
+                    return int(parts[1]) * 1024  # MemTotal in kB
     except Exception:
         pass
 
-    # Default fallback: 8 GB
-    return 8 * 1024 * 1024 * 1024
+    # Default fallback: 12 GB
+    return 12 * 1024 * 1024 * 1024
 
 
 def get_cuda_memory() -> int | None:
@@ -86,21 +91,27 @@ class ResourceGovernor:
 
     def plan_memory(self, cfg: SimConfig, approx_numel: int) -> dict[str, Any]:
         """Pre-flight memory budget verification."""
-        bytes_per_elem = 8 if cfg.compute_dtype == "float64" else 4
-        opt_factor = 3  # master, m, v
-        full_bytes = approx_numel * bytes_per_elem
+        # Total model state bytes per parameter:
+        # mixed_fp16: 2 + 2 + 12 = 16 bytes
+        # fp32: 4 + 4 + 8 = 16 bytes
+        # float64: 8 + 8 + 16 = 32 bytes
+        bytes_factor = 32 if cfg.compute_dtype == "float64" else 16
+        full_bytes = approx_numel * bytes_factor
 
         # Model state per rank according to ZeRO stage
         if cfg.stage == 0:
-            model_state_per_rank = (1 + 1 + opt_factor) * full_bytes
+            model_state_per_rank = full_bytes
         elif cfg.stage == 1:
-            model_state_per_rank = (1 + 1) * full_bytes + (opt_factor * full_bytes) // cfg.world_size
+            # 4 psi + 12 psi / N
+            model_state_per_rank = int(0.25 * full_bytes + (0.75 * full_bytes) // cfg.world_size)
         elif cfg.stage == 2:
-            model_state_per_rank = 1 * full_bytes + ((1 + opt_factor) * full_bytes) // cfg.world_size
+            # 2 psi + 14 psi / N
+            model_state_per_rank = int(0.125 * full_bytes + (0.875 * full_bytes) // cfg.world_size)
         elif cfg.stage == 3:
-            model_state_per_rank = ((1 + 1 + opt_factor) * full_bytes) // cfg.world_size
+            # 16 psi / N
+            model_state_per_rank = full_bytes // cfg.world_size
         else:
-            model_state_per_rank = (1 + 1 + opt_factor) * full_bytes
+            model_state_per_rank = full_bytes
 
         # Conservative activations estimate per rank
         act_estimate = (
@@ -109,7 +120,7 @@ class ResourceGovernor:
             * cfg.model.seq_len
             * cfg.model.d_model
             * cfg.model.n_layer
-            * bytes_per_elem
+            * (8 if cfg.compute_dtype == "float64" else 4)
         )
         total_predicted = cfg.world_size * (model_state_per_rank + act_estimate)
 
@@ -117,7 +128,7 @@ class ResourceGovernor:
             cuda_total = get_cuda_memory() or (16 * 1024**3)
             limit = int(cuda_total * self.memory_fraction)
             if total_predicted > limit:
-                raise RuntimeError(
+                raise SimGovernorError(
                     f"Governor rejected plan: Predicted {total_predicted / 1e6:.1f} MB exceeds "
                     f"50% CUDA memory limit ({limit / 1e6:.1f} MB). "
                     f"Please reduce world_size or use a smaller model config (e.g., 'tiny')."
@@ -126,9 +137,9 @@ class ResourceGovernor:
             ram_avail = get_available_memory()
             limit = int(ram_avail * self.memory_fraction)
             if total_predicted > limit:
-                raise RuntimeError(
+                raise SimGovernorError(
                     f"Governor rejected plan: Predicted {total_predicted / 1e6:.1f} MB exceeds "
-                    f"50% available RAM limit ({limit / 1e6:.1f} MB). "
+                    f"50% host RAM limit ({limit / 1e6:.1f} MB). "
                     f"Please reduce world_size or use a smaller model config (e.g., 'tiny')."
                 )
 

@@ -4,7 +4,6 @@ import pytest
 import torch
 
 from zerosim.config import (
-    MODEL_DEMO,
     MODEL_TINY,
     POLICY_FP32,
     POLICY_MIXED_FP16,
