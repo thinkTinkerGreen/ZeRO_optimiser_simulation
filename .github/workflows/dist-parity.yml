@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
 
       - name: Run E6 distributed test via pytest
         run: |

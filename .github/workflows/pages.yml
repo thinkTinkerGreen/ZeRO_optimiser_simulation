@@ -36,7 +36,7 @@ jobs:
       - name: Build static site
         run: |
           uv venv
-          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
           uv run python tools/build_site.py
 
       - name: Setup Pages

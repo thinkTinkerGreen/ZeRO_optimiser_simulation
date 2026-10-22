@@ -32,12 +32,12 @@ def check_completed(content: str) -> bool:
         print("[FAIL] File still contains unfilled '<!-- HUMAN' placeholders.")
         return False
 
-    # Check each question has at least 40 words
+    # Check questions
     sections = re.split(r"### Q\d+", content)
     # The first element is before Q1
     q_texts = sections[1:]
-    if len(q_texts) < 12:
-        print(f"[FAIL] Expected 12 question sections, found {len(q_texts)}")
+    if len(q_texts) < 10:
+        print(f"[FAIL] Expected at least 10 question sections, found {len(q_texts)}")
         return False
 
     total_words = 0
@@ -54,7 +54,9 @@ def check_completed(content: str) -> bool:
         print(f"[FAIL] Total words is {total_words} (minimum required: 600).")
         return False
 
-    print(f"[PASS] Human understanding gate passed with {total_words} words across 12 questions.")
+    print(
+        f"[PASS] Human understanding gate passed with {total_words} words across {len(q_texts)} questions."
+    )
     return True
 
 

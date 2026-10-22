@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
 
       - name: Run Ruff Check
         run: uv run ruff check .
@@ -71,7 +71,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
 
       - name: Run pytest with coverage
         run: |
@@ -99,7 +99,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
 
       - name: Validate committed notebook structure & non-empty outputs
         run: uv run python tools/check_notebook.py --check-committed
@@ -128,7 +128,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
 
       - name: Check README tables match results
         run: uv run python tools/render_readme_tables.py --check

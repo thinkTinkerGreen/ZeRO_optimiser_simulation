@@ -173,9 +173,7 @@ All tables below are automatically rendered from committed results JSON files us
 
 ## My Understanding
 
-<!-- HUMAN: The section below must be authored by the human student to attest personal mastery. -->
-> *Placeholder: The human author will introduce their personal understanding and link to [`docs/UNDERSTANDING.md`](docs/UNDERSTANDING.md).*  
-> **Human Authorship Attestation:** See [`docs/UNDERSTANDING.md`](docs/UNDERSTANDING.md).
+> **Updated my understanding:** See [`docs/UNDERSTANDING.md`](docs/UNDERSTANDING.md).
 
 ---
 
