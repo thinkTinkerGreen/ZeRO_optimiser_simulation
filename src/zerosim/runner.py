@@ -167,7 +167,10 @@ def run_simulation(cfg: SimConfig) -> SimulationResult:
         th.join()
     elapsed = time.perf_counter() - start_time
 
-    # Propagate any worker thread exception
+    # Propagate any worker thread exception (prioritizing root causes over broken barriers)
+    for r, exc in enumerate(thread_exceptions):
+        if exc is not None and "collective aborted" not in str(exc):
+            raise RuntimeError(f"Virtual rank {r} failed with exception: {exc}") from exc
     for r, exc in enumerate(thread_exceptions):
         if exc is not None:
             raise RuntimeError(f"Virtual rank {r} failed with exception: {exc}") from exc

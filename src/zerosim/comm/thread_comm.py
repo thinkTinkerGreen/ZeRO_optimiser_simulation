@@ -46,6 +46,9 @@ class ThreadCoordinator:
         self.signatures[rank] = sig
         self.slots[rank] = input_tensor
 
+        if input_tensor.is_cuda:
+            torch.cuda.synchronize()
+
         try:
             self.barrier_entry.wait(self.timeout)
         except threading.BrokenBarrierError as e:
@@ -102,6 +105,9 @@ class ThreadCoordinator:
 
                 else:
                     raise ValueError(f"Unknown collective operation '{op_name}'")
+
+                if input_tensor.is_cuda:
+                    torch.cuda.synchronize()
 
             except Exception as exc:
                 self.abort(exc)

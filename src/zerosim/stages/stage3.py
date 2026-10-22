@@ -18,127 +18,6 @@ from zerosim.sharding import (
 from zerosim.stages.base import BaseStage
 
 
-class ZeroUnitFn(torch.autograd.Function):
-    """Custom autograd Function executing unit forward/backward with dynamic parameter sharding."""
-
-    @staticmethod
-    def forward(
-        ctx,
-        unit_input: torch.Tensor,
-        param_shard: torch.Tensor,
-        unit_idx: int,
-        stage_ref: Stage3,
-    ) -> torch.Tensor:
-        ctx.unit_idx = unit_idx
-        ctx.stage_ref = stage_ref
-        ctx.unit_input = unit_input
-        ctx.param_shard = param_shard
-
-        unit = stage_ref.units[unit_idx]
-        u_name, module = stage_ref.unit_modules[unit_idx]
-
-        # Allocate transient gathered parameter in ledger
-        live_param_name = f"live_param_{u_name}"
-        stage_ref.ledger.alloc(
-            live_param_name,
-            MemoryCategory.PARAM,
-            unit.padded_numel,
-            stage_ref.cfg.policy.param_bytes,
-        )
-
-        # All-gather parameter shards from all ranks
-        flat_w = stage_ref.comm.all_gather(param_shard)
-        params = unflatten_unit_tensor(flat_w, unit)
-
-        # Load gathered parameters into module
-        for p, w in zip(module.parameters(), params):
-            p.data.copy_(w.data)
-
-        # Execute unit forward under enable_grad so saved_tensors_hooks records all activations identically
-        with stage_ref.compute_scope():
-            with torch.enable_grad():
-                out = module(unit_input)
-            out = out.detach()
-
-        # Free transient gathered parameter immediately after forward execution
-        stage_ref.ledger.free(live_param_name)
-        return out
-
-    @staticmethod
-    def backward(ctx, grad_output: torch.Tensor):
-        unit_input = ctx.unit_input
-        param_shard = ctx.param_shard
-        unit_idx = ctx.unit_idx
-        stage_ref: Stage3 = ctx.stage_ref
-        unit = stage_ref.units[unit_idx]
-        u_name, module = stage_ref.unit_modules[unit_idx]
-
-        # Transient live gathered parameters in ledger
-        live_param_name = f"live_param_{u_name}"
-        stage_ref.ledger.alloc(
-            live_param_name,
-            MemoryCategory.PARAM,
-            unit.padded_numel,
-            stage_ref.cfg.policy.param_bytes,
-        )
-
-        # All-gather parameter shards again for backward
-        flat_w = stage_ref.comm.all_gather(param_shard)
-        params = unflatten_unit_tensor(flat_w, unit)
-
-        for p, w in zip(module.parameters(), params):
-            p.data.copy_(w.data)
-            p.requires_grad = True
-
-        # Recompute unit forward pass under enable_grad
-        if unit_input.is_floating_point():
-            u_in = unit_input.detach().requires_grad_(True)
-        else:
-            u_in = unit_input
-
-        with stage_ref.compute_scope():
-            with torch.enable_grad():
-                out = module(u_in)
-
-            # Compute gradients with respect to parameters and unit input
-            if u_in.requires_grad:
-                grads = torch.autograd.grad(
-                    out,
-                    list(module.parameters()) + [u_in],
-                    grad_output,
-                )
-                param_grads = grads[:-1]
-                input_grad = grads[-1]
-            else:
-                grads = torch.autograd.grad(
-                    out,
-                    list(module.parameters()),
-                    grad_output,
-                )
-                param_grads = grads
-                input_grad = None
-
-        # Transient live gradient buffer in ledger
-        live_grad_name = f"live_grad_{u_name}"
-        stage_ref.ledger.alloc(
-            live_grad_name,
-            MemoryCategory.GRAD,
-            unit.padded_numel,
-            stage_ref.cfg.policy.grad_bytes,
-        )
-
-        flat_g = flatten_unit_tensors(param_grads, unit)
-        # Reduce-scatter parameter gradients immediately
-        reduced_shard = stage_ref.comm.reduce_scatter_mean(flat_g)
-        stage_ref.grad_shards[unit_idx].copy_(reduced_shard)
-
-        # Free transient live gradient and parameter buffers
-        stage_ref.ledger.free(live_grad_name)
-        stage_ref.ledger.free(live_param_name)
-
-        return input_grad, None, None, None
-
-
 class Stage3(BaseStage):
     """ZeRO Stage 3: Full sharding of parameters, gradients, and optimizer states."""
 
@@ -226,20 +105,120 @@ class Stage3(BaseStage):
         self.ledger.mark_phase(step_idx, "forward")
         self.model.zero_grad(set_to_none=True)
 
+        unit_inputs: list[torch.Tensor] = []
         with torch.autograd.graph.saved_tensors_hooks(
             self._pack_activation_hook, self._unpack_activation_hook
         ):
-            # Sequential unit execution with dynamic all-gather via ZeroUnitFn
             x = inputs
             for idx in range(len(self.units)):
-                x = ZeroUnitFn.apply(x, self.param_shards[idx], idx, self)
-            logits = x
+                unit_inputs.append(x)
+                unit = self.units[idx]
+                u_name, module = self.unit_modules[idx]
+
+                # Allocate transient gathered parameter in ledger
+                live_param_name = f"live_param_{u_name}"
+                self.ledger.alloc(
+                    live_param_name,
+                    MemoryCategory.PARAM,
+                    unit.padded_numel,
+                    self.cfg.policy.param_bytes,
+                )
+
+                # All-gather parameter shards from all ranks
+                flat_w = self.comm.all_gather(self.param_shards[idx])
+                params = unflatten_unit_tensor(flat_w, unit)
+
+                # Load gathered parameters into module
+                for p, w in zip(module.parameters(), params):
+                    p.data.copy_(w.data)
+
+                # Execute unit forward
+                with self.compute_scope():
+                    with torch.enable_grad():
+                        out = module(x)
+                    out = out.detach()
+
+                # Free transient gathered parameter immediately after forward execution
+                self.ledger.free(live_param_name)
+                x = out
+
+            logits = x.requires_grad_(True)
             with self.compute_scope():
                 loss = compute_loss(logits, targets)
         loss_val = loss.item()
 
         self.ledger.mark_phase(step_idx, "backward")
-        loss.backward()
+        (grad_output,) = torch.autograd.grad(loss, logits)
+
+        for idx in reversed(range(len(self.units))):
+            unit = self.units[idx]
+            u_name, module = self.unit_modules[idx]
+            unit_in = unit_inputs[idx]
+
+            # Transient live gathered parameters in ledger
+            live_param_name = f"live_param_{u_name}"
+            self.ledger.alloc(
+                live_param_name,
+                MemoryCategory.PARAM,
+                unit.padded_numel,
+                self.cfg.policy.param_bytes,
+            )
+
+            # All-gather parameter shards again for backward
+            flat_w = self.comm.all_gather(self.param_shards[idx])
+            params = unflatten_unit_tensor(flat_w, unit)
+
+            for p, w in zip(module.parameters(), params):
+                p.data.copy_(w.data)
+                p.requires_grad = True
+
+            # Recompute unit forward pass under enable_grad
+            if unit_in.is_floating_point():
+                u_in = unit_in.detach().requires_grad_(True)
+            else:
+                u_in = unit_in
+
+            with self.compute_scope():
+                with torch.enable_grad():
+                    out = module(u_in)
+
+                # Compute gradients with respect to parameters and unit input
+                if u_in.requires_grad:
+                    grads = torch.autograd.grad(
+                        out,
+                        list(module.parameters()) + [u_in],
+                        grad_output,
+                    )
+                    param_grads = grads[:-1]
+                    input_grad = grads[-1]
+                else:
+                    grads = torch.autograd.grad(
+                        out,
+                        list(module.parameters()),
+                        grad_output,
+                    )
+                    param_grads = grads
+                    input_grad = None
+
+            # Transient live gradient buffer in ledger
+            live_grad_name = f"live_grad_{u_name}"
+            self.ledger.alloc(
+                live_grad_name,
+                MemoryCategory.GRAD,
+                unit.padded_numel,
+                self.cfg.policy.grad_bytes,
+            )
+
+            flat_g = flatten_unit_tensors(param_grads, unit)
+            # Reduce-scatter parameter gradients immediately
+            reduced_shard = self.comm.reduce_scatter_mean(flat_g)
+            self.grad_shards[idx].copy_(reduced_shard)
+
+            # Free transient live gradient and parameter buffers
+            self.ledger.free(live_grad_name)
+            self.ledger.free(live_param_name)
+
+            grad_output = input_grad
 
         self._free_saved_activations()
 
