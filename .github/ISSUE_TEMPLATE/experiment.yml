@@ -1,0 +1,21 @@
+name: Experiment Proposal / Report
+description: Propose or record a new ZeRO experiment
+labels: ["experiment"]
+body:
+  - type: markdown
+    attributes:
+      value: Documenting an experimental run or hypothesis.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What hypothesis or metric is being evaluated?
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results / Data
+      description: Include run hash, parameters, and observed metrics.
+    validations:
+      required: true

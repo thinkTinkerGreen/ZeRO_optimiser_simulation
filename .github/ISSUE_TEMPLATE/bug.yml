@@ -1,0 +1,21 @@
+name: Bug Report
+description: File a bug report for ZeRO simulator
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting an issue!
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Describe what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction Steps
+      description: Exact commands or code to reproduce.
+    validations:
+      required: true

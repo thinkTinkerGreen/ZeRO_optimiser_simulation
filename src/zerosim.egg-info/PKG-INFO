@@ -1,0 +1,29 @@
+Metadata-Version: 2.4
+Name: zerosim
+Version: 0.1.0
+Summary: Deterministic simulator and visualizer for ZeRO data-parallel stages (ZeRO-1, ZeRO-2, ZeRO-3) across 32 virtual GPUs
+Author: thinkTinkerGreen
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: matplotlib>=3.7.0
+Provides-Extra: torch
+Requires-Dist: torch>=2.4.0; extra == "torch"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
+Requires-Dist: hypothesis>=6.90.0; extra == "dev"
+Requires-Dist: nbmake>=1.5.0; extra == "dev"
+Requires-Dist: nbformat>=5.9.0; extra == "dev"
+Requires-Dist: ruff>=0.5.0; extra == "dev"
+Requires-Dist: pyright>=1.1.380; extra == "dev"
+Requires-Dist: pip-audit>=2.7.0; extra == "dev"
+Dynamic: license-file

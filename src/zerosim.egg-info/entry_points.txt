@@ -1,0 +1,2 @@
+[console_scripts]
+zerosim = zerosim.cli:main

@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b5f58b2abc5763ade55e4e9d0fe52cd1ff7979ca # v5.2.1
+        with:
+          version: "0.5.21"
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Run Ruff Check
+        run: uv run ruff check .
+
+      - name: Run Ruff Format Check
+        run: uv run ruff format --check .
+
+      - name: Run Pyright
+        run: uv run pyright
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b5f58b2abc5763ade55e4e9d0fe52cd1ff7979ca # v5.2.1
+        with:
+          version: "0.5.21"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Run pytest with coverage
+        run: |
+          PYTHONHASHSEED=0 uv run pytest tests/unit tests/property tests/integration \
+            --cov=src/zerosim --cov-report=term-missing --cov-report=xml --cov-fail-under=90
+
+  notebook:
+    name: Notebook Smoke & Output Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b5f58b2abc5763ade55e4e9d0fe52cd1ff7979ca # v5.2.1
+        with:
+          version: "0.5.21"
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Validate committed notebook structure & non-empty outputs
+        run: uv run python tools/check_notebook.py --check-committed
+
+      - name: Execute notebook in smoke mode
+        run: ZEROSIM_SMOKE=1 uv run pytest --nbmake notebooks/ZeRO_optimiser_sim.ipynb
+
+  readme-drift:
+    name: README Drift Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@b5f58b2abc5763ade55e4e9d0fe52cd1ff7979ca # v5.2.1
+        with:
+          version: "0.5.21"
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -e ".[dev,torch]" --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Check README tables match results
+        run: uv run python tools/render_readme_tables.py --check
+
+  understanding-gate:
+    name: Human Understanding Completion Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check Understanding scaffold / completion
+        run: python3 tools/check_understanding.py
